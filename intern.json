@@ -1,0 +1,5 @@
+{
+    "suites": "./src/*.test.ts",
+    "environments": ["node"],
+    "coverage": ["./src/*.ts", "!./src/*.test.ts"]
+}
