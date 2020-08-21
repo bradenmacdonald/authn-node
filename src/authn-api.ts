@@ -193,7 +193,7 @@ export class KeratinAuthNClient {
 
     /** Wipe all personal information, including username and password. Intended for user deletion routine. */
     public async archive(args: {accountId: number}): Promise<void> {
-        return this.callApi("delete", `/accounts/${args.accountId}`);
+        const result = this.callApi("delete", `/accounts/${args.accountId}`, undefined, false);
     }
 
     /** Flags the account for a required password change on their next login */
@@ -209,18 +209,17 @@ export class KeratinAuthNClient {
      * Always claims to succeed - use isUsernameRegistered() if you need to know if this will succeed or not.
      */
     public async requestPasswordlessLogin(args: {username: string}): Promise<void> {
-        const result = await this.callApiRaw("get", `/session/token`, {username: args.username });
-        if (result.status !== 200) {
-            const msg = await result.text();
-            this.#log(`AuthN: passwordless login request failed with ${result.status} ${result.statusText} (${msg})`);
-            throw new KeratinAuthNError(result.status, result.statusText);
-        }
+        const result = await this.callApi("get", `/session/token`, {username: args.username }, false);
     }
 
-    private async callApi(method: "get"|"post"|"patch"|"delete", url: string, data?: any): Promise<any> {
+    private async callApi(method: "get"|"post"|"patch"|"delete", url: string, data?: any, jsonResult = true): Promise<any> {
         const result = await this.callApiRaw(method, url, data);
         if (result.status >= 200 && result.status <= 300) {
-            return (await result.json()).result;
+            if (jsonResult) {
+                return (await result.json()).result;
+            } else {
+                return await result.text();
+            }
         } else {
             const msg = await result.text();
             let errors: ErrorDetail[]|undefined = undefined;
